@@ -1,0 +1,6 @@
+node_modules/
+repo/node_modules/
+repo/.clasp.json
+repo/package-lock.json
+plantilla menu.html
+*.log

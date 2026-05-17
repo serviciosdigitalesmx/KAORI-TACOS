@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Cocina</title>
+  <style>
+    :root{--bg:#0c0a09;--panel:#171312;--accent:#ea580c;--muted:#a8a29e}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#18110f,var(--bg));color:#fafaf9;padding:20px}
+    .wrap{max-width:1200px;margin:0 auto}
+    .hero{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px}
+    .hero h1{margin:0;font-size:clamp(2rem,5vw,3.8rem);letter-spacing:-.05em}
+    .hero p{margin:0;color:var(--muted)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:16px;margin-bottom:12px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+    input,select{width:100%;padding:12px 14px;border-radius:14px;border:1px solid #2a2623;background:#1f1a18;color:#fff}
+    button{padding:11px 14px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--accent),#c2410c);color:#fff;font-weight:900;cursor:pointer}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+    .small{color:var(--muted)}
+    .section-title{margin:0 0 12px;font-size:1.1rem;text-transform:uppercase;letter-spacing:.18em;color:#fdba74}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="pill">Panel Cocina</div>
+        <h1>Tacos Kas Ri</h1>
+        <p>Administra menú, configuración y pedidos.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Nuevo producto</h3>
+      <div class="row">
+        <input id="name" placeholder="Nombre">
+        <select id="sec"><option value="tacos">Tacos</option><option value="hamburguesas">Hamburguesas</option><option value="papas">Papas</option><option value="tortas">Tortas</option><option value="frijoles">Frijoles</option></select>
+        <input id="price" type="number" placeholder="Precio">
+        <input id="desc" placeholder="Descripción">
+        <input id="image" placeholder="URL imagen">
+        <button onclick="addItem()">Agregar</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Catálogo actual</h3>
+      <div id="menu" class="grid"></div>
+    </div>
+  </div>
+  <script>
+    async function load(){ const menu=await fetch('/api/menu').then(r=>r.json()); document.getElementById('menu').innerHTML=menu.map(item=>`<div class="card"><strong>${item.name}</strong><div class="small">${item.sec} · ${item.desc || ''}</div><div class="small">${item.available ? 'Disponible' : 'Oculto'}</div><div class="small">${item.price}</div></div>`).join(''); }
+    async function addItem(){ await fetch('/api/menu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('name').value,sec:document.getElementById('sec').value,price:Number(document.getElementById('price').value),desc:document.getElementById('desc').value,image:document.getElementById('image').value})}); load(); }
+    load();
+  </script>
+</body>
+</html>
