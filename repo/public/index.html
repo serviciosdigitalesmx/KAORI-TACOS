@@ -171,6 +171,17 @@
     .qty button{width:42px;height:42px;border-radius:12px;border:0;font-size:18px;background:#f5f5f5}
     .line{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px}
     .small{color:#6b7280;font-size:.9rem}
+    .status{
+      display:none;
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(234,88,12,.14);
+      border:1px solid rgba(234,88,12,.3);
+      color:#fed7aa;
+      font-size:.92rem;
+      font-weight:700;
+    }
     @media (max-width:640px){
       .cartinner{flex-direction:column;align-items:stretch}
       .contactbar{gap:8px}
@@ -190,6 +201,7 @@
         <div class="contact whatsapp">WhatsApp 811-508-4869</div>
         <div class="contact phone">Tel 554-854-9106</div>
       </div>
+      <div id="status" class="status"></div>
       <div class="chips" id="chips"></div>
     </section>
     <section class="grid" id="grid"></section>
@@ -216,10 +228,30 @@
     </div>
   </div>
   <script>
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBzGEVJfpNOE__Ep0fyGec80fm_UbA3HcwfeFFdbkjw1S7cK_4OCYcBIQKvlrWvpMUKQ/exec?format=json';
     let state={categories:[],items:[],config:null,active:'all',cart:[],current:null,qty:1};
     const money=new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:0});
-    function api(url, opts={}){ return fetch(url, { headers:{'Content-Type':'application/json'}, ...opts }).then(r => r.json()); }
-    async function load(){ const data=await api('/api/bootstrap'); state.config=data.config; state.items=data.menu.filter(i=>i.available!==false); state.categories=[...new Map(state.items.map(i=>[i.sec,{id:i.sec,name:pretty(i.sec)}]))].map(([,v])=>v); document.getElementById('businessName').textContent=state.config.businessName; document.getElementById('subtitle').textContent=state.config.heroSubtitle; document.getElementById('hours').textContent=`Horario: ${state.config.openHour}:00 a ${state.config.closeHour===24?'12:00':state.config.closeHour+':00'} | Cerrado los ${state.config.closedDay}s`; renderChips(); renderGrid(); refreshCart(); }
+    function showStatus(message){ const el=document.getElementById('status'); el.textContent=message; el.style.display='block'; }
+    async function load(){
+      try{
+        const res=await fetch(BACKEND_URL,{cache:'no-store'});
+        if(!res.ok) throw new Error('Backend no disponible');
+        const data=await res.json();
+        if(!data || !Array.isArray(data.menu) || !data.config) throw new Error('Respuesta inválida del backend');
+        state.config=data.config;
+        state.items=data.menu.filter(i=>i.available!==false);
+        state.categories=[...new Map(state.items.map(i=>[i.sec,{id:i.sec,name:pretty(i.sec)}]))].map(([,v])=>v);
+        document.getElementById('businessName').textContent=state.config.businessName;
+        document.getElementById('subtitle').textContent=state.config.heroSubtitle;
+        document.getElementById('hours').textContent=`Horario: ${state.config.openHour}:00 a ${state.config.closeHour===24?'12:00':state.config.closeHour+':00'} | Cerrado los ${state.config.closedDay}s`;
+        renderChips();
+        renderGrid();
+        refreshCart();
+      }catch(err){
+        showStatus('No se pudo cargar el menú desde Apps Script. Revisa el despliegue y vuelve a intentar.');
+        console.error(err);
+      }
+    }
     function pretty(id){ return ({tacos:'Tacos',hamburguesas:'Hamburguesas',papas:'Papas',tortas:'Tortas',frijoles:'Frijoles'})[id] || id; }
     function renderChips(){ const c=document.getElementById('chips'); c.innerHTML=['all',...state.categories.map(x=>x.id)].map(id=>{ const label=id==='all'?'Todo':pretty(id); return `<button class="chip ${state.active===id?'active':''}" onclick="setCategory('${id}')">${label}</button>`; }).join(''); }
     function setCategory(id){ state.active=id; renderChips(); renderGrid(); }
